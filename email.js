@@ -1,16 +1,18 @@
-const creds = require('./creds.json');
-const EQ_USER = Buffer.from(creds.user, 'base64').toString('binary');
-const EQ_PASS = Buffer.from(creds.pw, 'base64').toString('binary');
+const prompt = require('prompt-sync')();
+const EQ_USER = prompt('Enter your email: ');
+const EQ_PASS = prompt('Enter your password: ', {echo: '*'});
 const nodemailer = require('nodemailer');
 const { format } = require('./email_template');
 
-async function sendEmails(data) {
+async function sendEmails(data, sendToSelf=true) {
     let emails = [];
     for (const teacher in data) {
         emails.push(formatEmail(teacher, data[teacher]));
     }
-    
-    await queueEmails([emails[0]], 'lcorb28@eq.edu.au', EQ_USER, EQ_PASS);
+
+    emails = emails.slice(0, 9);
+
+    await queueEmails(emails, 'lcorb28@eq.edu.au', EQ_USER, EQ_PASS, sendToSelf);
 }
 
 function formatEmail(teacher, data) {
@@ -23,22 +25,16 @@ function formatEmail(teacher, data) {
     });
 
     let studentCount = Object.values(students).length;
-    // return {
-    //     message: `Hi ${data.f_name},\nFor NCCD, you have ${studentCount} students to complete across ${Object.values(data.classes).length} classes.\n\n${data.email}`,
-    //     subject: 'NCCD',
-    //     to: 'lcorb28@eq.edu.au',
-    //     attachment: `./sheets/${data.f_name} ${data.l_name} - NCCD.xlsx`
-    // };
 
     return {
-        message: format(`Hi ${data.f_name}`, 'Your NCCD data is ready to be completed. Please download and complete the attached file, and send it back to <a href="mailto:dkeen27@eq.edu.au?subject=Completed NCCD Spreadsheet">David Keenan</a> with the subject "Completed NCCD Spreadsheet".', `${studentCount} student${studentCount > 1 ? 's' : ''}`),
-        subject: 'NCCD',
-        to: 'lcorb28@eq.edu.au',
+        message: format(`Hi ${data.f_name}`, 'Your NCCD data for the year is ready to be completed. Please download and complete the attached file, and send it back to <a href="mailto:dkeen27@eq.edu.au?subject=Completed NCCD Spreadsheet">David Keenan</a> with the subject "Completed NCCD Spreadsheet".', `${studentCount} student${studentCount > 1 ? 's' : ''}`),
+        subject: 'NCCD Data',
+        to: data.email,
         attachment: `./sheets/${data.f_name} ${data.l_name} - NCCD.xlsx`
     };
 }
 
-async function queueEmails(emails, from, user, pass) {
+async function queueEmails(emails, from, user, pass, sendToSelf=true) {
     let transport = nodemailer.createTransport({
         host: "smtp.office365.com", // hostname smtp-mail.outlook.com
         secureConnection: false, // TLS requires secureConnection to be false
@@ -55,7 +51,7 @@ async function queueEmails(emails, from, user, pass) {
     for (const email of emails) {
         const m = {
           from: from,
-          to: email.to,
+          to: sendToSelf ? user: email.to,
           subject: email.subject,
           html: email.message,
           attachments: [{
@@ -64,6 +60,8 @@ async function queueEmails(emails, from, user, pass) {
         };
         await transport.sendMail(m);
     }
+
+    console.log(`Sent ${Object.keys(emails).length} emails.`);
 }
 
 module.exports = { sendEmails }

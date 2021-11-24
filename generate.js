@@ -17,6 +17,7 @@ const PRODUCT_COL = 'I';
 const ENVIRONMENT_COL = 'J';
 
 async function generateSheets(data) {
+    console.log('Generating sheets.');
     // let template = await readXLSX('./template.xlsx');
     // template_sheet = getDataFromWb(template);
     
@@ -93,7 +94,7 @@ async function generateSheets(data) {
             workbook.xlsx.writeFile(`./sheets/${data[teacher].f_name} ${data[teacher].l_name} - NCCD.xlsx`);
             sheetCount++;
         } else {
-            console.log(':(')
+            // console.log(':(')
         } 
     }
 

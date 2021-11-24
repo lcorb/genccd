@@ -24,7 +24,7 @@ async function parse() {
 
         const data = await synthesizeData(students, teachers, classes);
 
-        console.log(`Sucessfully collected ${Object.keys(students).length} students into ${Object.keys(classes).length} classes and sorted into ${Object.keys(teachers).length} teachers!`);
+        console.log(`Successfully collected ${Object.keys(students).length} students into ${Object.keys(classes).length} classes, sorted into ${Object.keys(teachers).length} teachers!`);
 
         return data;
     } catch (error) {
